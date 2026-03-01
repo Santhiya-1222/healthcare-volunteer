@@ -1,0 +1,14 @@
+{
+  "name": "volunteer-health-system",
+  "version": "1.0.0",
+  "description": "Health and Care Support System Using OTP-Based Secure Volunteer Network",
+  "scripts": {
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
