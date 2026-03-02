@@ -116,3 +116,40 @@ exports.getAllVolunteers = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// ── Aadhaar verification ──
+exports.verifyAadhaar = async (req, res) => {
+  try {
+    const { status } = req.body; // "verified" | "rejected"
+
+    if (!["verified", "rejected"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status. Use 'verified' or 'rejected'." });
+    }
+
+    const volunteer = await User.findById(req.params.id);
+    if (!volunteer || volunteer.role !== "volunteer") {
+      return res.status(404).json({ error: "Volunteer not found." });
+    }
+
+    // Fetch the admin's name for audit trail
+    const admin = await User.findById(req.session.userId).select("name");
+
+    volunteer.aadhaarVerified    = status;
+    volunteer.aadhaarVerifiedAt  = new Date();
+    volunteer.aadhaarVerifiedBy  = admin?.name || "Admin";
+    await volunteer.save({ validateModifiedOnly: true });
+
+    await Notification.create({
+      recipientId: volunteer._id,
+      type: "aadhaar_verified",
+      message:
+        status === "verified"
+          ? "Your Aadhaar document has been verified successfully by the admin."
+          : "Your Aadhaar document was rejected. Please re-upload a valid, clear document.",
+    });
+
+    res.json({ message: `Aadhaar ${status} successfully.` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

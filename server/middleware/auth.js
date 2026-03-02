@@ -16,7 +16,9 @@ const auth = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    res.status(500).json({ error: "Server error." });
+    // CastError = invalid ObjectId in session — destroy it and treat as unauthenticated
+    req.session.destroy(() => {});
+    res.status(401).json({ error: "Session invalid. Please login again." });
   }
 };
 

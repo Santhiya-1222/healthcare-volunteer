@@ -3,7 +3,10 @@ const { generateOtp, sendOtp } = require("../utils/sendOtp");
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, phone, password, role, address, latitude, longitude } = req.body;
+    const {
+      name, email, phone, password, role, address, latitude, longitude,
+      aadhaarNumber, aadhaarDocumentUrl,
+    } = req.body;
 
     const existingUser = await User.findOne({ $or: [{ email }, { phone }] });
     if (existingUser) {
@@ -12,6 +15,16 @@ exports.register = async (req, res) => {
 
     const validRoles = ["user", "volunteer"];
     const userRole = validRoles.includes(role) ? role : "user";
+
+    // Validate Aadhaar for volunteers
+    if (userRole === "volunteer") {
+      if (!aadhaarNumber || !/^\d{12}$/.test(aadhaarNumber)) {
+        return res.status(400).json({ error: "A valid 12-digit Aadhaar number is required for volunteers." });
+      }
+      if (!aadhaarDocumentUrl) {
+        return res.status(400).json({ error: "Aadhaar document upload is required for volunteers." });
+      }
+    }
 
     const user = await User.create({
       name,
@@ -25,6 +38,8 @@ exports.register = async (req, res) => {
         coordinates: [parseFloat(longitude) || 0, parseFloat(latitude) || 0],
       },
       isVerified: userRole === "user",
+      aadhaarNumber:      userRole === "volunteer" ? aadhaarNumber      : "",
+      aadhaarDocumentUrl: userRole === "volunteer" ? aadhaarDocumentUrl : "",
     });
 
     res.status(201).json({
@@ -39,6 +54,7 @@ exports.register = async (req, res) => {
 exports.sendOtp = async (req, res) => {
   try {
     const { phone } = req.body;
+
     const user = await User.findOne({ phone });
     if (!user) {
       return res.status(404).json({ error: "Phone number not registered." });
@@ -47,10 +63,7 @@ exports.sendOtp = async (req, res) => {
     const otp = generateOtp();
     const otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
 
-    user.otp = otp;
-    user.otpExpiry = otpExpiry;
-    await user.save({ validateModifiedOnly: true });
-
+    await User.updateOne({ _id: user._id }, { otp, otpExpiry });
     await sendOtp(phone, otp);
 
     const response = { message: "OTP sent successfully.", phone };
@@ -82,9 +95,7 @@ exports.verifyOtp = async (req, res) => {
     }
 
     // Clear OTP
-    user.otp = undefined;
-    user.otpExpiry = undefined;
-    await user.save({ validateModifiedOnly: true });
+    await User.updateOne({ _id: user._id }, { $unset: { otp: "", otpExpiry: "" } });
 
     // Create session
     req.session.userId = user._id;

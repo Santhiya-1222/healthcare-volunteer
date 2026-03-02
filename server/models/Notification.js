@@ -13,6 +13,7 @@ const notificationSchema = new mongoose.Schema({
       "status_update",
       "new_request",
       "feedback_received",
+      "aadhaar_verified",
     ],
     required: true,
   },

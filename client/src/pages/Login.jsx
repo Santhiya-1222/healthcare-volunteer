@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { sendOtp, verifyOtp } from "../services/authService";
@@ -14,11 +14,12 @@ const Login = () => {
   const [devOtp,  setDevOtp]  = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (user) {
-    const dest = user.role === "admin" ? "/admin/dashboard" : user.role === "volunteer" ? "/volunteer/dashboard" : "/user/dashboard";
-    navigate(dest, { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (user) {
+      const dest = user.role === "admin" ? "/admin/dashboard" : user.role === "volunteer" ? "/volunteer/dashboard" : "/user/dashboard";
+      navigate(dest, { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSendOtp = async (e) => {
     e.preventDefault();

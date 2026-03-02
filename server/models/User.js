@@ -22,6 +22,12 @@ const userSchema = new mongoose.Schema(
     totalRatings: { type: Number, default: 0 },
     otp: { type: String },
     otpExpiry: { type: Date },
+    // ── Aadhaar verification ──
+    aadhaarNumber:      { type: String, default: "" },
+    aadhaarDocumentUrl: { type: String, default: "" },
+    aadhaarVerified:    { type: String, enum: ["pending", "verified", "rejected"], default: "pending" },
+    aadhaarVerifiedAt:  { type: Date },
+    aadhaarVerifiedBy:  { type: String, default: "" },
   },
   { timestamps: true }
 );

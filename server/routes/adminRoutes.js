@@ -9,6 +9,7 @@ const {
   blockVolunteer,
   getAllRequests,
   getAllVolunteers,
+  verifyAadhaar,
 } = require("../controllers/adminController");
 
 router.get("/dashboard", auth, authorize("admin"), getDashboard);
@@ -16,6 +17,7 @@ router.get("/volunteers/pending", auth, authorize("admin"), getPendingVolunteers
 router.get("/volunteers/all", auth, authorize("admin"), getAllVolunteers);
 router.put("/volunteers/:id/verify", auth, authorize("admin"), verifyVolunteer);
 router.put("/volunteers/:id/block", auth, authorize("admin"), blockVolunteer);
+router.put("/volunteers/:id/verify-aadhaar", auth, authorize("admin"), verifyAadhaar);
 router.get("/requests", auth, authorize("admin"), getAllRequests);
 
 module.exports = router;

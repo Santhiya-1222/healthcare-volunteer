@@ -6,3 +6,4 @@ export const getAllVolunteers = () => api.get("/admin/volunteers/all");
 export const verifyVolunteer = (id) => api.put(`/admin/volunteers/${id}/verify`);
 export const blockVolunteer = (id) => api.put(`/admin/volunteers/${id}/block`);
 export const getAllRequests = () => api.get("/admin/requests");
+export const verifyAadhaar = (id, status) => api.put(`/admin/volunteers/${id}/verify-aadhaar`, { status });

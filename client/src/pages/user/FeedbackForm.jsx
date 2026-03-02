@@ -2,12 +2,18 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { submitFeedback } from "../../services/requestService";
 import toast from "react-hot-toast";
+import { HiArrowLeft } from "react-icons/hi";
+
+const ratingLabels = ["", "Poor", "Fair", "Good", "Very Good", "Excellent"];
+const ratingColors = [
+  "", "text-red-500", "text-orange-500", "text-amber-500", "text-lime-500", "text-emerald-500",
+];
 
 const FeedbackForm = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [rating, setRating] = useState(0);
-  const [hover, setHover] = useState(0);
+  const { id }     = useParams();
+  const navigate   = useNavigate();
+  const [rating, setRating]   = useState(0);
+  const [hover, setHover]     = useState(0);
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -26,39 +32,95 @@ const FeedbackForm = () => {
     }
   };
 
-  return (
-    <div className="max-w-lg mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Rate This Service</h1>
+  const display = hover || rating;
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border p-6 space-y-6">
-        <div className="text-center">
-          <p className="text-gray-500 mb-4">How was your experience?</p>
-          <div className="flex justify-center gap-2">
+  return (
+    <div className="max-w-md mx-auto px-6 py-10 animate-fade-in">
+      {/* Header */}
+      <div className="mb-8">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-700 mb-4 transition-colors"
+        >
+          <HiArrowLeft className="text-xs" /> Back
+        </button>
+        <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight">Rate This Service</h1>
+        <p className="text-sm text-slate-500 mt-1">Your feedback helps volunteers improve and builds trust.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {/* Star Rating */}
+        <div className="card p-8 text-center">
+          <p className="text-sm font-medium text-slate-600 mb-6">How was your experience?</p>
+
+          <div className="flex justify-center gap-2 mb-4">
             {[1, 2, 3, 4, 5].map((s) => (
-              <button key={s} type="button"
+              <button
+                key={s}
+                type="button"
                 onClick={() => setRating(s)}
                 onMouseEnter={() => setHover(s)}
                 onMouseLeave={() => setHover(0)}
-                className="text-4xl transition-transform hover:scale-110">
-                <span className={s <= (hover || rating) ? "text-yellow-400" : "text-gray-200"}>★</span>
+                className={`text-5xl transition-all duration-150 select-none ${
+                  s <= display ? "text-amber-400 scale-110" : "text-slate-200"
+                } hover:scale-110`}
+              >
+                ★
               </button>
             ))}
           </div>
-          <p className="text-sm text-gray-400 mt-2">
-            {rating === 1 && "Poor"}{rating === 2 && "Fair"}{rating === 3 && "Good"}{rating === 4 && "Very Good"}{rating === 5 && "Excellent"}
-          </p>
+
+          <div className="min-h-[24px]">
+            {display > 0 ? (
+              <p className={`text-lg font-semibold ${ratingColors[display]}`}>
+                {ratingLabels[display]}
+              </p>
+            ) : (
+              <p className="text-sm text-slate-400">Click a star to rate</p>
+            )}
+          </div>
+
+          {/* Rating bar */}
+          {rating > 0 && (
+            <div className="flex gap-1 mt-4 justify-center">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <div
+                  key={s}
+                  className={`h-1.5 w-8 rounded-full transition-all duration-300 ${
+                    s <= rating ? "bg-amber-400" : "bg-slate-200"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Comment (Optional)</label>
-          <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3}
-            placeholder="Share your experience..."
-            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary-500 outline-none resize-none" />
+        {/* Comment */}
+        <div className="card p-5">
+          <label className="block text-sm font-semibold text-slate-700 mb-3">
+            Comment{" "}
+            <span className="text-slate-400 font-normal">(Optional)</span>
+          </label>
+          <textarea
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            rows={4}
+            placeholder="Share your experience — what went well, what could be better…"
+            className="input resize-none"
+          />
         </div>
 
-        <button type="submit" disabled={loading}
-          className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 transition disabled:opacity-50">
-          {loading ? "Submitting..." : "Submit Feedback"}
+        <button
+          type="submit"
+          disabled={loading || rating === 0}
+          className="btn-xl btn-primary w-full"
+        >
+          {loading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Submitting…
+            </>
+          ) : "Submit Feedback"}
         </button>
       </form>
     </div>
