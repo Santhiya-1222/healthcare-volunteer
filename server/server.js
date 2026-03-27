@@ -1,4 +1,6 @@
-require("dotenv").config({ path: "../.env" });
+// Load env properly (IMPORTANT FIX)
+require("dotenv").config({ path: __dirname + "/.env" });
+
 const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
@@ -15,9 +17,13 @@ const notificationRoutes = require("./routes/notificationRoutes");
 
 const app = express();
 
+// 🔍 DEBUG (remove later)
+console.log("MONGO URI:", process.env.MONGODB_URI);
+
 // Middleware
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json());
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL || "http://localhost:5173",
@@ -25,19 +31,20 @@ app.use(
   })
 );
 
+// Session setup (FIXED)
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "fallback_secret",
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI,
+      mongoUrl: process.env.MONGODB_URI, // ✅ FIXED
       ttl: 24 * 60 * 60,
     }),
     cookie: {
       maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: false,
       sameSite: "lax",
     },
   })
@@ -51,15 +58,24 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/recurring", recurringRoutes);
 app.use("/api/notifications", notificationRoutes);
 
+// Health check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "Server is running" });
 });
 
-// Start recurring scheduler
+// Start scheduler
 require("./jobs/recurringScheduler");
 
-// Connect DB first, then start server
+// Start server AFTER DB connection
 const PORT = process.env.PORT || 5000;
-connectDB().then(() => {
-  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-});
+
+connectDB()
+  .then(() => {
+    console.log("✅ MongoDB connected");
+    app.listen(PORT, () =>
+      console.log(`🚀 Server running on port ${PORT}`)
+    );
+  })
+  .catch((err) => {
+    console.error("❌ DB Connection Error:", err);
+  });
